@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * Edits in this version by Connor Holm
  */
 
 package com.gs.collections.kata;
@@ -75,11 +77,8 @@ public class Exercise1Test extends CompanyDomainForKata
          */
     	
         MutableList<Customer> customers = this.company.getCustomers();
-        MutableList<Customer> customersFromLondon = customers.select( new Predicate<Customer>() {
-            	public boolean accept(Customer customer) {
-            		return customer.getCity() == "London";
-            	}
-        });
+        MutableList<Customer> customersFromLondon = customers.select(
+        		customer -> customer.getCity() == "London" );
         Verify.assertSize("Should be 2 London customers", 2, customersFromLondon);
     }
 }
