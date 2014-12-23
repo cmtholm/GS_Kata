@@ -57,11 +57,11 @@ public class Exercise1Test extends CompanyDomainForKata
          * ctrl+i in IntelliJ. Eclipse's ctrl+1 is auto-fix and works to implement interfaces.
          */
         MutableList<Customer> customers = this.company.getCustomers();
-        MutableList<String> customerCities = customers.collect( new Function<Customer, String>() {
+        MutableList<String> customerCities = customers.collect( customer -> customer.getCity()/*new Function<Customer, String>() {
         	public String valueOf(Customer customer) {
         		return customer.getCity();
         	}
-        });
+        }*/);
 
         MutableList<String> expectedCities = FastList.newListWith("London", "Liphook", "London");
         Assert.assertEquals(expectedCities, customerCities);
