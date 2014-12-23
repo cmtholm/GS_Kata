@@ -42,7 +42,7 @@ public class Exercise4Test extends CompanyDomainForKata
     @Test
     public void findItemNames()
     {
-        MutableList<LineItem> allOrderedLineItems = this.company.getOrders().flatCollect(Order::getLineItems);
+        MutableList<LineItem> allOrderedLineItems = this.company.getOrders().flatCollect(Order.TO_LINE_ITEMS);
         MutableSet<String> actualItemNames = allOrderedLineItems.collect(LineItem.TO_NAME).toSet();
 
         Verify.assertInstanceOf(MutableSet.class, actualItemNames);

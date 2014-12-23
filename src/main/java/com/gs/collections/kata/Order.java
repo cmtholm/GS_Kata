@@ -117,4 +117,5 @@ public class Order
 
         return CollectionAdapter.adapt(itemValues).injectInto(0.0, AddFunction.DOUBLE_TO_DOUBLE);
     }
+    
 }
