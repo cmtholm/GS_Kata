@@ -30,17 +30,9 @@ import org.junit.Assert;
  */
 public class Customer
 {
-    public static final Function<Customer, String> TO_NAME = new Function<Customer, String>()
-    {
-        @Override
-        public String valueOf(Customer customer)
-        {
-            Assert.fail("Replace with the implementation of the Function.");
-            return null;
-        }
-    };
+    public static final Function<Customer, String> TO_NAME = Customer::getName;
 
-    public static final Function<Customer, String> TO_CITY = null;
+    public static final Function<Customer, String> TO_CITY = Customer::getCity;
 
     public static final Function<Customer, Double> TO_TOTAL_ORDER_VALUE =
             new Function<Customer, Double>()
