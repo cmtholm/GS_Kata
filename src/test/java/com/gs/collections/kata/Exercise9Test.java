@@ -20,12 +20,15 @@ import com.gs.collections.api.bag.sorted.MutableSortedBag;
 import com.gs.collections.api.block.function.Function;
 import com.gs.collections.api.block.function.Function0;
 import com.gs.collections.api.block.function.Function2;
+import com.gs.collections.api.block.predicate.Predicate;
 import com.gs.collections.api.list.MutableList;
 import com.gs.collections.api.map.MutableMap;
 import com.gs.collections.api.multimap.list.MutableListMultimap;
 import com.gs.collections.impl.bag.sorted.mutable.TreeBag;
+import com.gs.collections.impl.block.factory.Predicates;
 import com.gs.collections.impl.list.mutable.FastList;
 import com.gs.collections.impl.test.Verify;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,22 +42,13 @@ public class Exercise9Test extends CompanyDomainForKata
     @Test
     public void totalOrderValuesByCity()
     {
-        Function0<Double> zeroValueFactory = new Function0<Double>()
-        {
-            public Double value()
-            {
-                return Double.valueOf(0.0);
-            }
-        };
+        Function0<Double> zeroValueFactory = () -> Double.valueOf(0.0);
 
-        Function2<Double, Customer, Double> aggregator = new Function2<Double, Customer, Double>()
-        {
-            public Double value(Double result, Customer customer)
-            {
-                return result + customer.getTotalOrderValue();
-            }
-        };
-        MutableMap<String, Double> map = null;
+        Function2<Double, Customer, Double> aggregator = 
+        		(Double result, Customer customer) -> result + customer.getTotalOrderValue(); 
+      
+        MutableMap<String, Double> map = this.company.getCustomers()
+        		.aggregateBy(Customer.TO_CITY, zeroValueFactory, aggregator);
         Assert.assertEquals(2, map.size());
         Assert.assertEquals(446.25, map.get("London"), 0.0);
         Assert.assertEquals(857.0, map.get("Liphook"), 0.0);
@@ -67,22 +61,14 @@ public class Exercise9Test extends CompanyDomainForKata
     @Test
     public void totalOrderValuesByItem()
     {
-        Function0<Double> zeroValueFactory = new Function0<Double>()
-        {
-            public Double value()
-            {
-                return Double.valueOf(0.0);
-            }
-        };
+    	 Function0<Double> zeroValueFactory = () -> Double.valueOf(0.0);
 
-        Function2<Double, LineItem, Double> aggregator = new Function2<Double, LineItem, Double>()
-        {
-            public Double value(Double result, LineItem lineItem)
-            {
-                return result + lineItem.getValue();
-            }
-        };
-        MutableMap<String, Double> map = null;
+         Function2<Double, LineItem, Double> aggregator = 
+         		(Double result, LineItem lineItem) -> result + lineItem.getValue(); 
+         		
+
+        MutableMap<String, Double> map = this.company.getOrders().flatCollect(Order.TO_LINE_ITEMS)
+        		.aggregateBy(LineItem.TO_NAME, zeroValueFactory, aggregator);
         Verify.assertSize(12, map);
         Assert.assertEquals(100.0, map.get("shed"), 0.0);
         Assert.assertEquals(10.5, map.get("cup"), 0.0);
@@ -94,7 +80,11 @@ public class Exercise9Test extends CompanyDomainForKata
     @Test
     public void sortedOrders()
     {
-        MutableSortedBag<Double> orderedPrices = null;
+        MutableSortedBag<Double> orderedPrices = 
+        		TreeBag.newBag(Collections.reverseOrder(), this.company.getOrders()
+        		.flatCollect(Order.TO_LINE_ITEMS)
+        		.select(item -> item.getValue() > 7.5)
+        		.collect(LineItem::getValue));
 
         MutableSortedBag<Double> expectedPrices = TreeBag.newBagWith(
                 Collections.reverseOrder(), 500.0, 150.0, 120.0, 75.0, 50.0, 50.0, 12.5);
@@ -107,7 +97,16 @@ public class Exercise9Test extends CompanyDomainForKata
     @Test
     public void whoOrderedSaucers()
     {
-        MutableList<Customer> customersWithSaucers = null;
+    	Predicate<Customer> ORDERED_SAUCER = new Predicate<Customer>() {
+    		@Override
+    		public boolean accept(Customer customer) {
+    			MutableList<LineItem> items = customer.getOrders().flatCollect(Order.TO_LINE_ITEMS);
+    			return items.anySatisfy(Predicates.attributeEqual(LineItem.TO_NAME, "saucer"));
+    		}
+    	};
+    	
+        MutableList<Customer> customersWithSaucers = this.company.getCustomers()
+        		.select(ORDERED_SAUCER);
         Verify.assertSize("customers with saucers", 2, customersWithSaucers);
     }
 
@@ -118,7 +117,7 @@ public class Exercise9Test extends CompanyDomainForKata
     public void ordersByCustomerUsingAsMap()
     {
         MutableMap<String, MutableList<Order>> customerNameToOrders =
-                this.company.getCustomers().toMap(null, null);
+                this.company.getCustomers().toMap(Customer.TO_NAME, Customer::getOrders);
 
         Assert.assertNotNull("customer name to orders", customerNameToOrders);
         Verify.assertSize("customer names", 3, customerNameToOrders);
@@ -133,7 +132,18 @@ public class Exercise9Test extends CompanyDomainForKata
     @Test
     public void mostExpensiveItem()
     {
-        MutableListMultimap<Double, Customer> multimap = null;
+    	Function<Customer, Double> MAX_PRICE = new Function<Customer, Double>() {
+    		
+    		@Override
+            public Double valueOf(Customer customer)
+            {
+                return customer.getOrders().flatCollect(Order.TO_LINE_ITEMS).collect(LineItem::getValue).max();
+            }
+    		
+    	};
+    	
+        MutableListMultimap<Double, Customer> multimap = 
+        		this.company.getCustomers().groupBy(MAX_PRICE);
         Assert.assertEquals(3, multimap.size());
         Assert.assertEquals(2, multimap.keysView().size());
         Assert.assertEquals(
